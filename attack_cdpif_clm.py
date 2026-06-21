@@ -1444,6 +1444,7 @@ def generate_attack(
     reference_texts = texts.copy()
     text_histories = [{text} for text in texts]
     infos = [{} for _ in texts]
+    last_accepted_infos = [{} for _ in texts]
     cfg.source_model_paths = source_model_paths
     owns_cache = cache is None and cfg.cache_models
     if owns_cache:
@@ -1469,7 +1470,21 @@ def generate_attack(
                     forbidden_texts=text_histories[idx],
                 )
                 info["iteration"] = iteration + 1
-                infos[idx] = info
+                if info.get("reason") == "accepted":
+                    infos[idx] = info
+                    last_accepted_infos[idx] = info.copy()
+                elif last_accepted_infos[idx]:
+                    merged_info = last_accepted_infos[idx].copy()
+                    merged_info["last_reason"] = info.get("reason")
+                    merged_info["last_iteration"] = iteration + 1
+                    infos[idx] = merged_info
+                else:
+                    info["last_reason"] = info.get("reason")
+                    info["last_iteration"] = iteration + 1
+                    info.setdefault("source_scoring_mode", cfg.source_scoring_mode)
+                    info.setdefault("candidate_mode", cfg.candidate_mode)
+                    info.setdefault("source_chat_scoring", cfg.source_chat_scoring)
+                    infos[idx] = info
                 current_texts[idx] = new_text
                 text_histories[idx].add(new_text)
             total_time += time.time() - start_time

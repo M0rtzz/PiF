@@ -314,6 +314,8 @@ def main():
                         "SourceChatScoring": info.get("source_chat_scoring"),
                         "AssistantPrefill": args.assistant_prefill,
                         "Reason": info.get("reason"),
+                        "LastReason": info.get("last_reason"),
+                        "LastIteration": info.get("last_iteration"),
                         "TargetError": info.get("target_error"),
                     }
                     f.write(json.dumps(row) + "\n")
