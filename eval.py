@@ -63,12 +63,34 @@ def gpt_judge(QApairs, outputs_to_judge):
     return scores, reasons, outputs_to_judge
 
 def ahs(file_path):
-    data = []
+    data_by_no = {}
+    data_without_no = []
     with open(file_path) as f:
         lines = f.readlines()
 
     for line in lines:
-        data.append(json.loads(line))
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(record, dict):
+            continue
+        if "Input" not in record or "Response" not in record:
+            continue
+        sample_no = record.get("No.")
+        if isinstance(sample_no, bool):
+            sample_no = None
+        if isinstance(sample_no, int):
+            data_by_no[sample_no] = record
+        else:
+            data_without_no.append(record)
+
+    if data_by_no:
+        data = [data_by_no[key] for key in sorted(data_by_no)]
+    else:
+        data = data_without_no
+    if not data:
+        return None
 
     prompt = [data[i]['Input'] for i in range(len(data))]
     outputs_to_judge = [data[i]['Response'] for i in range(len(data))]
